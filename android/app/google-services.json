@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906007571083",
+    "project_id": "tanishuv-667dd",
+    "storage_bucket": "tanishuv-667dd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906007571083:android:94f63d137ac74fff19428e",
+        "android_client_info": {
+          "package_name": "com.tanishuv.uz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmY3rkS1525uXaJrvm9_Lac_Mklphz-RA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

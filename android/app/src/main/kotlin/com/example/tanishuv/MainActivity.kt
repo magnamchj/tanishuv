@@ -1,4 +1,4 @@
-package com.example.tanishuv
+package com.tanishuv.uz
 
 import io.flutter.embedding.android.FlutterActivity
 
