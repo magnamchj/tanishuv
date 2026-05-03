@@ -1,0 +1,16 @@
+{
+  "@@locale": "ru",
+  "appName": "Tanishuv",
+  "settings": "Настройки",
+  "account": "Аккаунт",
+  "inviteFriends": "Пригласить друзей",
+  "inviteFriendsDesc": "Получайте бонусные монеты за рефералов",
+  "language": "Язык",
+  "aboutApp": "О Tanishuv",
+  "logout": "Выйти",
+  "deleteAccount": "Удалить аккаунт",
+  "close": "Закрыть",
+  "yourInviteCode": "Ваш код приглашения:",
+  "yourCoins": "Ваши монеты:",
+  "inviteMessage": "Поделитесь этим кодом! Когда друзья регистрируются, вы получаете 100 монет!"
+}

@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 import '../../services/auth_service.dart';
 import '../../services/chat_service.dart';
 import '../../models/user_model.dart';
-import '../premium/subscription_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/edit_profile_screen.dart';
 import '../settings/fullscreen_image_viewer.dart';
@@ -22,8 +21,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final PageController _pageController = PageController();
-  int _currentPhotoIndex = 0;
   int _likesReceived = 0;
   bool _isSeeding = false;
   Future<UserModel?>? _userFuture;
@@ -41,7 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -264,13 +260,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())).then((_) => setState(() {}));
           },
         ),
-        if (!user.isPremium)
-          _buildiOSActionButton(
-            icon: Icons.star_border_rounded,
-            label: 'Premium',
-            color: Colors.amber,
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionScreen())),
-          ),
         if (user.isAdmin)
           _buildiOSActionButton(
             icon: Icons.admin_panel_settings_outlined,

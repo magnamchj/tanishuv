@@ -1,38 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tanishuv</title>
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+  <script>
+    function getParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+    const ref = getParam("ref") || "";
+    const appLink = ref
+      ? `tanishuv://invite?ref=${ref}`
+      : `tanishuv://`;
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
+    const iosStore = "https://apps.apple.com/app/6765862602";
+    const androidStore = "https://play.google.com/store/apps/details?id=com.tanishuv.uz";
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+    function openApp() {
+      const start = Date.now();
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="tanishuv">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+      // Try to open app
+      window.location.href = appLink;
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+      setTimeout(() => {
+        const elapsed = Date.now() - start;
 
-  <title>tanishuv</title>
-  <link rel="manifest" href="manifest.json">
+        // If app opened → browser pauses → elapsed will be large
+        if (elapsed < 2000) {
+          const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+          if (isIOS) {
+            window.location.href = iosStore;
+          } else {
+            window.location.href = androidStore;
+          }
+        }
+      }, 2500); // longer delay
+    }
+
+    window.onload = openApp;
+  </script>
 </head>
-<body>
-  <script src="flutter_bootstrap.js" async></script>
+
+<body
+  style="background:#0f0f0f;color:white;text-align:center;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;">
+
+  <div>
+    <h1>🔥 Join Tanishuv</h1>
+    <p>Opening app...</p>
+  </div>
+
 </body>
+
 </html>

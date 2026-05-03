@@ -1,4 +1,16 @@
 {
   "@@locale": "en",
-  "appName": "Tanishuv"
+  "appName": "Tanishuv",
+  "settings": "Settings",
+  "account": "Account",
+  "inviteFriends": "Invite Friends",
+  "inviteFriendsDesc": "Get bonus coins for referrals",
+  "language": "Language",
+  "aboutApp": "About Tanishuv",
+  "logout": "Logout",
+  "deleteAccount": "Delete Account",
+  "close": "Close",
+  "yourInviteCode": "Your Invite Code:",
+  "yourCoins": "Your Coins:",
+  "inviteMessage": "Share this code! When friends use it to register, you earn 100 bonus coins!"
 }

@@ -74,11 +74,16 @@ class NotificationService {
   }
 
   Future<void> saveTokenToFirestore(String userId) async {
-    final token = await getToken();
-    if (token != null) {
-      await FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'tanishuv').collection('users').doc(userId).update({
-        'fcmToken': token,
-      });
+    try {
+      final token = await getToken();
+      if (token != null) {
+        await FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'tanishuv').collection('users').doc(userId).set({
+          'fcmToken': token,
+        }, SetOptions(merge: true));
+      }
+    } catch (e) {
+      // Silently handle — token will be saved on next app launch
+      print('Failed to save FCM token: $e');
     }
   }
 
@@ -127,6 +132,24 @@ class NotificationService {
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       '💬 $senderName',
       message,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  Future<void> showReferralNotification(String newUserName) async {
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      '🎉 Do\'stingiz qo\'shildi!',
+      '$newUserName sizning taklif havolangiz orqali qo\'shildi. +1 kredit!',
       NotificationDetails(
         android: AndroidNotificationDetails(
           _channel.id,

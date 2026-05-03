@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>GIDClientID</key>
+<string>906007571083-mgkov482nkpsg9r01s5grh46h1r1smif.apps.googleusercontent.com</string>
+<key>REVERSED_CLIENT_ID</key>
+<string>com.googleusercontent.apps.906007571083-mgkov482nkpsg9r01s5grh46h1r1smif</string>
 	<key> NSLocationUsageDescription</key>
 	<string>This app requires access to the location</string>
 	<key>NSNotificationUsageDescription</key>
@@ -64,7 +68,12 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>tanishuv</string>
+				<string>tanishuv-667dd.web.app</string>
+				<string>https://tanishuv-667dd.web.app</string>
 				<string>app-1-906007571083-ios-2ed88ccee6a39bc119428e</string>
+				<string>com.googleusercontent.apps.906007571083-mgkov482nkpsg9r01s5grh46h1r1smif</string>
+				
 			</array>
 		</dict>
 	</array>

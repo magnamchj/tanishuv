@@ -1,0 +1,16 @@
+{
+  "@@locale": "uz",
+  "appName": "Tanishuv",
+  "settings": "Sozlamalar",
+  "account": "Hisob",
+  "inviteFriends": "Do'stlarni taklif qilish",
+  "inviteFriendsDesc": "Takliflar uchun bonus tangalar oling",
+  "language": "Til",
+  "aboutApp": "Tanishuv haqida",
+  "logout": "Chiqish",
+  "deleteAccount": "Hisobni o'chirish",
+  "close": "Yopish",
+  "yourInviteCode": "Sizning taklif kodingiz:",
+  "yourCoins": "Sizning tangalaringiz:",
+  "inviteMessage": "Ushbu kodni ulashing! Do'stlaringiz u bilan ro'yxatdan o'tganda 100 tanga olasiz!"
+}

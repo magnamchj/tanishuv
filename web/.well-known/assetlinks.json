@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "com.tanishuv.uz",
+            "sha256_cert_fingerprints": [
+                "B6:42:12:86:B8:8F:62:90:CE:18:F5:93:1E:74:F6:D1:12:80:D9:BD:5C:B0:8B:C2:AD:27:61:86:10:6B:18:C8"
+            ]
+        }
+    }
+]

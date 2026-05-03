@@ -9,7 +9,6 @@ class UserModel {
   final String gender;
   final List<String> interests;
   final bool isAnonymous;
-  final bool isPremium;
   final bool isVerified;
   final bool isAdmin;
   final String? bio;
@@ -34,6 +33,15 @@ class UserModel {
   final int maxAgePref;
   final String? genderPref;
   final double distancePref;
+  
+  // Referral System
+  final String? referralCode;
+  final String? invitedBy;
+  final int inviteCredits;
+
+  bool get canSeeLikes => inviteCredits >= 3;
+  bool get canOpenProfiles => inviteCredits >= 5;
+  bool get canAnonymousChat => inviteCredits >= 1;
 
   UserModel({
     required this.uid,
@@ -44,7 +52,6 @@ class UserModel {
     required this.gender,
     required this.interests,
     required this.isAnonymous,
-    required this.isPremium,
     this.isVerified = false,
     this.isAdmin = false,
     this.bio,
@@ -65,6 +72,9 @@ class UserModel {
     this.maxAgePref = 60,
     this.genderPref,
     this.distancePref = 50.0,
+    this.referralCode,
+    this.invitedBy,
+    this.inviteCredits = 0,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> data, String documentId) {
@@ -77,7 +87,6 @@ class UserModel {
       gender: data['gender'] ?? 'Unknown',
       interests: List<String>.from(data['interests'] ?? []),
       isAnonymous: data['isAnonymous'] ?? false,
-      isPremium: data['isPremium'] ?? false,
       isVerified: data['isVerified'] ?? false,
       isAdmin: data['isAdmin'] ?? false,
       bio: data['bio'],
@@ -98,6 +107,9 @@ class UserModel {
       maxAgePref: data['maxAgePref'] ?? 60,
       genderPref: data['genderPref'],
       distancePref: data['distancePref'] != null ? (data['distancePref'] as num).toDouble() : 50.0,
+      referralCode: data['referralCode'],
+      invitedBy: data['invitedBy'],
+      inviteCredits: data['inviteCredits'] ?? data['bonusCoins'] ?? 0, // Fallback to bonusCoins for old data
     );
   }
 
@@ -110,7 +122,6 @@ class UserModel {
       'gender': gender,
       'interests': interests,
       'isAnonymous': isAnonymous,
-      'isPremium': isPremium,
       'isVerified': isVerified,
       'isAdmin': isAdmin,
       'bio': bio,
@@ -131,6 +142,9 @@ class UserModel {
       'maxAgePref': maxAgePref,
       'genderPref': genderPref,
       'distancePref': distancePref,
+      'referralCode': referralCode,
+      'invitedBy': invitedBy,
+      'inviteCredits': inviteCredits,
     };
   }
 

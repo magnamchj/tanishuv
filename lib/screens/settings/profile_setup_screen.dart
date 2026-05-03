@@ -83,7 +83,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       gender: 'Unknown',
       interests: _selectedInterests,
       isAnonymous: false,
-      isPremium: false,
+      
       bio: _bioController.text.trim(),
     ));
 

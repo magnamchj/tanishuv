@@ -200,7 +200,7 @@ class DemoUserSeederService {
             'nickname': userData['name'].toString().toLowerCase(),
             'photoUrl': imageUrl,
             'isAnonymous': false,
-            'isPremium': true,
+            
             'isVerified': true,
             'isAdmin': false,
             'blockedUsers': [],

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'dart:ui';
 import '../../models/user_model.dart';
+import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../settings/fullscreen_image_viewer.dart';
+import '../settings/invite_progress_screen.dart';
 
 class PersonDetailScreen extends StatefulWidget {
   final UserModel user;
@@ -41,26 +45,92 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeaderInfo(widget.user),
-                  const SizedBox(height: 32),
-                  if (widget.user.bio != null && widget.user.bio!.isNotEmpty) ...[
-                    const Text('About', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    Text(widget.user.bio!, style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.5)),
-                    const SizedBox(height: 32),
-                  ],
-                  if (widget.user.interests.isNotEmpty) ...[
-                    const Text('Interests', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    _buildInterestsWrap(widget.user.interests),
-                    const SizedBox(height: 32),
-                  ],
-                  _buildDetailsCard(widget.user),
-                  const SizedBox(height: 120), // Padding for buttons
-                ],
+              child: StreamBuilder<UserModel?>(
+                stream: Provider.of<AuthService>(context, listen: false).currentUserModelStream,
+                builder: (context, snapshot) {
+                  final canOpenProfiles = snapshot.data?.canOpenProfiles ?? false;
+                  
+                  Widget header = _buildHeaderInfo(widget.user);
+                  
+                  Widget privateContent = Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 32),
+                      if (widget.user.bio != null && widget.user.bio!.isNotEmpty) ...[
+                        const Text('About', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Text(widget.user.bio!, style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.5)),
+                        const SizedBox(height: 32),
+                      ],
+                      if (widget.user.interests.isNotEmpty) ...[
+                        const Text('Interests', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        _buildInterestsWrap(widget.user.interests),
+                        const SizedBox(height: 32),
+                      ],
+                      _buildDetailsCard(widget.user),
+                      const SizedBox(height: 120), // Padding for buttons
+                    ],
+                  );
+
+                  if (!canOpenProfiles) {
+                    final needed = snapshot.data != null ? 5 - snapshot.data!.inviteCredits : 5;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        header,
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            ImageFiltered(
+                              imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: IgnorePointer(child: privateContent),
+                            ),
+                            Positioned.fill(
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceColor.withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(color: Colors.white12),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.lock, color: Colors.white70, size: 48),
+                                        const SizedBox(height: 16),
+                                        const Text('Deep Info Locked', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 8),
+                                        Text('Invite $needed more friend${needed == 1 ? '' : 's'} to read bios and details.', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton(
+                                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const InviteProgressScreen())),
+                                          style: ElevatedButton.styleFrom(backgroundColor: Colors.pinkAccent),
+                                          child: const Text('Invite Friends'),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        )
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      header,
+                      privateContent,
+                    ],
+                  );
+                }
               ),
             ),
           ),

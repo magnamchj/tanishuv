@@ -6,11 +6,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/services.dart';
 import '../../services/chat_service.dart';
+import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
 import '../../models/match_model.dart';
 import '../../theme/app_theme.dart';
 import 'chat_detail_screen.dart';
 import 'anonymous_chat_screen.dart';
+import '../settings/invite_progress_screen.dart';
 
 class MatchesListScreen extends StatefulWidget {
   const MatchesListScreen({super.key});
@@ -24,74 +26,138 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     final chatService = Provider.of<ChatService>(context, listen: false);
+    final authService = Provider.of<AuthService>(context, listen: false);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
+      body: StreamBuilder<UserModel?>(
+        stream: authService.currentUserModelStream,
+        builder: (context, snapshot) {
+          final user = snapshot.data;
+          final canAnonymousChat = user?.canAnonymousChat ?? false;
+          final creditsNeeded = user != null ? 7 - user.inviteCredits : 7;
+
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
           SliverAppBar(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
             pinned: true,
-            expandedHeight: 120,
+            floating: true,
+            expandedHeight: 110,
             flexibleSpace: ClipRect(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                 child: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                  titlePadding: const EdgeInsets.only(left: 20, bottom: 64, right: 16),
                   centerTitle: false,
+                  expandedTitleScale: 1.3,
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text('Chats', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 28, letterSpacing: -1)),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16, bottom: 4),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => HapticFeedback.lightImpact(),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
-                                child: const Icon(Icons.search, color: Colors.white, size: 18),
-                              ),
+                      const Text(
+                        'Chats',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 22, letterSpacing: -0.8),
+                      ),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => HapticFeedback.lightImpact(),
+                            child: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+                              child: const Icon(Icons.edit_square, color: Colors.white, size: 18),
                             ),
-                            const SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () => HapticFeedback.lightImpact(),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
-                                child: const Icon(Icons.tune_rounded, color: Colors.white, size: 18),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Container(
+                  height: 38,
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      Icon(Icons.search, color: Colors.white.withOpacity(0.4), size: 18),
+                      const SizedBox(width: 8),
+                      Text('Search', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 16)),
                     ],
                   ),
                 ),
               ),
             ),
           ),
+          SliverToBoxAdapter(child: _buildAnonymousChatTopBanner(context, canAnonymousChat, creditsNeeded)),
+          SliverToBoxAdapter(child: _buildActiveUsersRow(context, currentUserId, chatService)),
           SliverToBoxAdapter(
-            child: _buildAnonymousChatTopBanner(context),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, top: 16, bottom: 8),
+              child: Text(
+                'MESSAGES',
+                style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+              ),
+            ),
           ),
-          SliverToBoxAdapter(
-            child: _buildActiveUsersRow(context, currentUserId, chatService),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.only(top: 16, bottom: 100),
-            sliver: _buildMatchesList(context, currentUserId, chatService),
-          ),
+          SliverPadding(padding: const EdgeInsets.only(bottom: 100), sliver: _buildMatchesList(context, currentUserId, chatService)),
         ],
-      ),
+      );
+    }),
     );
   }
 
-  Widget _buildAnonymousChatTopBanner(BuildContext context) {
+  Widget _buildAnonymousChatTopBanner(BuildContext context, bool canChat, int needed) {
+    if (!canChat) {
+      return GestureDetector(
+        onTap: () {
+          HapticFeedback.heavyImpact();
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const InviteProgressScreen()));
+        },
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceColor,
+            border: Border.all(color: Colors.white12),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), shape: BoxShape.circle),
+                child: const Icon(Icons.lock, color: Colors.white54, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Anonymous Chat',
+                      style: TextStyle(color: Colors.white54, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Invite $needed more friend${needed == 1 ? '' : 's'} to unlock.', style: const TextStyle(color: Colors.pinkAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.group_add, color: Colors.pinkAccent, size: 24),
+            ],
+          ),
+        ).animate().fade(duration: 500.ms).slideY(begin: -0.2),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         HapticFeedback.heavyImpact();
@@ -120,7 +186,10 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Anonymous Chat 👀', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5)),
+                  const Text(
+                    'Anonymous Chat 👀',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                  ),
                   const SizedBox(height: 4),
                   Text('Connect instantly, reveal later. 🔥', style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
                 ],
@@ -145,7 +214,10 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 20, bottom: 12, top: 8),
-              child: Text('ACTIVE NOW', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+              child: Text(
+                'ACTIVE NOW',
+                style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+              ),
             ),
             SizedBox(
               height: 90,
@@ -163,7 +235,12 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                       return GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ChatDetailScreen(chatId: matches[index].id, opponentUser: user)));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatDetailScreen(chatId: matches[index].id, opponentUser: user),
+                            ),
+                          );
                         },
                         onLongPress: () {
                           HapticFeedback.heavyImpact();
@@ -175,34 +252,31 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                           child: Column(
                             children: [
                               Container(
-                                width: 64,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.greenAccent, width: 2.5),
-                                  boxShadow: [
-                                    BoxShadow(color: Colors.greenAccent.withOpacity(0.4), blurRadius: 10, spreadRadius: 2),
-                                  ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(2.0),
-                                  child: ClipOval(
-                                    child: ImageFiltered(
-                                      // Simulated blur if anonymous, else clear
-                                      imageFilter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                                      child: user.photoUrl.isNotEmpty
-                                          ? Image.network(user.photoUrl, fit: BoxFit.cover)
-                                          : Container(color: AppTheme.surfaceColor),
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.greenAccent, width: 2.5),
+                                      boxShadow: [BoxShadow(color: Colors.greenAccent.withOpacity(0.4), blurRadius: 10, spreadRadius: 2)],
                                     ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(2.0),
+                                      child: ClipOval(
+                                        child: ImageFiltered(
+                                          // Simulated blur if anonymous, else clear
+                                          imageFilter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                                          child: user.photoUrl.isNotEmpty
+                                              ? Image.network(user.photoUrl, fit: BoxFit.cover)
+                                              : Container(color: AppTheme.surfaceColor),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                                  .custom(
+                                    duration: 1.5.seconds,
+                                    builder: (context, value, child) => Transform.scale(scale: 1.0 + (value * 0.05), child: child),
                                   ),
-                                ),
-                              ).animate(onPlay: (c) => c.repeat(reverse: true)).custom(
-                                duration: 1.5.seconds,
-                                builder: (context, value, child) => Transform.scale(
-                                  scale: 1.0 + (value * 0.05),
-                                  child: child,
-                                )
-                              ),
                               const SizedBox(height: 8),
                               Text(
                                 user.name.split(' ').first,
@@ -240,7 +314,10 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
                 children: [
                   const Icon(Icons.chat_bubble_outline, size: 64, color: Colors.white24),
                   const SizedBox(height: 16),
-                  const Text('No messages yet', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                  const Text(
+                    'No messages yet',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 8),
                   Text('Start a 1-Min Chat to connect!', style: TextStyle(color: Colors.white.withOpacity(0.5))),
                 ],
@@ -252,13 +329,10 @@ class _MatchesListScreenState extends State<MatchesListScreen> {
         final matches = snapshot.data!;
 
         return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final match = matches[index];
-              return _MatchListItem(match: match, currentUserId: currentUserId, chatService: chatService, index: index);
-            },
-            childCount: matches.length,
-          ),
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final match = matches[index];
+            return _MatchListItem(match: match, currentUserId: currentUserId, chatService: chatService, index: index);
+          }, childCount: matches.length),
         );
       },
     );
@@ -307,8 +381,8 @@ class _MatchListItemState extends State<_MatchListItem> {
                 motion: const StretchMotion(),
                 children: [
                   SlidableAction(
-                    onPressed: (context) { 
-                      HapticFeedback.mediumImpact(); 
+                    onPressed: (context) {
+                      HapticFeedback.mediumImpact();
                       widget.chatService.pinMatch(widget.match.id, widget.currentUserId);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chat pinned')));
                     },
@@ -323,8 +397,8 @@ class _MatchListItemState extends State<_MatchListItem> {
                 motion: const StretchMotion(),
                 children: [
                   SlidableAction(
-                    onPressed: (context) { 
-                      HapticFeedback.mediumImpact(); 
+                    onPressed: (context) {
+                      HapticFeedback.mediumImpact();
                       widget.chatService.muteMatch(widget.match.id, widget.currentUserId);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chat muted')));
                     },
@@ -334,8 +408,8 @@ class _MatchListItemState extends State<_MatchListItem> {
                     label: 'Mute',
                   ),
                   SlidableAction(
-                    onPressed: (context) { 
-                      HapticFeedback.heavyImpact(); 
+                    onPressed: (context) {
+                      HapticFeedback.heavyImpact();
                       widget.chatService.deleteMatch(widget.match.id, widget.currentUserId);
                     },
                     backgroundColor: Colors.redAccent.shade700,
@@ -345,102 +419,118 @@ class _MatchListItemState extends State<_MatchListItem> {
                   ),
                 ],
               ),
-                child: Column(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => ChatDetailScreen(chatId: widget.match.id, opponentUser: matchedUser)
-                        ));
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        child: Row(
-                          children: [
-                            // Telegram Style Avatar
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: AppTheme.surfaceColor,
-                                    image: matchedUser.photoUrl.isNotEmpty ? DecorationImage(image: NetworkImage(matchedUser.photoUrl), fit: BoxFit.cover) : null,
-                                  ),
-                                  child: ClipOval(
-                                    child: ImageFiltered(
-                                      imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Simulated blur
-                                      child: matchedUser.photoUrl.isEmpty ? const Icon(Icons.person, color: Colors.white54) : Container(color: Colors.transparent),
-                                    ),
+              child: Column(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailScreen(chatId: widget.match.id, opponentUser: matchedUser),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          // Telegram Style Avatar
+                          Stack(
+                            children: [
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppTheme.surfaceColor,
+                                  image: matchedUser.photoUrl.isNotEmpty
+                                      ? DecorationImage(image: NetworkImage(matchedUser.photoUrl), fit: BoxFit.cover)
+                                      : null,
+                                ),
+                                child: ClipOval(
+                                  child: ImageFiltered(
+                                    imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5), // Simulated blur
+                                    child: matchedUser.photoUrl.isEmpty
+                                        ? const Icon(Icons.person, color: Colors.white54)
+                                        : Container(color: Colors.transparent),
                                   ),
                                 ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: BoxDecoration(
-                                      color: Colors.greenAccent,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2.5),
-                                    ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  width: 14,
+                                  height: 14,
+                                  decoration: BoxDecoration(
+                                    color: Colors.greenAccent,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2.5),
                                   ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Anonymous 👀',
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                    ),
+                                    Text(
+                                      '14:24',
+                                      style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: isTyping
+                                          ? const Text(
+                                              'Typing...',
+                                              style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.w500),
+                                            ).animate(onPlay: (c) => c.repeat(reverse: true)).fade()
+                                          : Text(
+                                              lastMsg ?? 'Tap to reveal and chat! 🔥',
+                                              style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5)),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                    ),
+                                    if (unreadCount > 0)
+                                      Container(
+                                        margin: const EdgeInsets.only(left: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(10)),
+                                        child: Text(
+                                          '$unreadCount',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        'Anonymous 👀',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)
-                                      ),
-                                      Text('14:24', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: isTyping 
-                                          ? const Text('Typing...', style: TextStyle(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.w500)).animate(onPlay: (c) => c.repeat(reverse: true)).fade()
-                                          : Text(
-                                            lastMsg ?? 'Tap to reveal and chat! 🔥', 
-                                            style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5)), 
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                      ),
-                                      if (unreadCount > 0)
-                                        Container(
-                                          margin: const EdgeInsets.only(left: 8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                          decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(10)),
-                                          child: Text('$unreadCount', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 76),
-                      child: Divider(height: 1, thickness: 0.5, color: Colors.white.withOpacity(0.08)),
-                    ),
-                  ],
-                ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 76),
+                    child: Divider(height: 1, thickness: 0.5, color: Colors.white.withOpacity(0.08)),
+                  ),
+                ],
+              ),
             ).animate().fade(delay: (widget.index * 50).ms).slideX(begin: 0.1);
           },
         );
@@ -448,5 +538,3 @@ class _MatchListItemState extends State<_MatchListItem> {
     );
   }
 }
-
-

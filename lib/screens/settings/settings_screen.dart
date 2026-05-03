@@ -5,6 +5,9 @@ import '../../services/auth_service.dart';
 import '../../services/db_service.dart';
 import '../../theme/app_theme.dart';
 import 'edit_profile_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../../providers/locale_provider.dart';
+import 'invite_progress_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -98,35 +101,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
 
           // Account
-          _sectionHeader('Account'),
+          _sectionHeader(AppLocalizations.of(context)?.account ?? 'Account'),
+          ListTile(
+            leading: const Icon(Icons.group_add, color: Colors.pinkAccent),
+            title: Text(AppLocalizations.of(context)?.inviteFriends ?? 'Invite Friends', style: const TextStyle(color: Colors.pinkAccent)),
+            subtitle: Text(AppLocalizations.of(context)?.inviteFriendsDesc ?? 'Get bonus credits for referrals',
+                style: const TextStyle(fontSize: 12, color: Colors.white38)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const InviteProgressScreen()));
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.language, color: Colors.white54),
-            title: const Text('Language'),
-            subtitle: const Text('O\'zbek / Русский / English',
-                style: TextStyle(fontSize: 12, color: Colors.white38)),
+            title: Text(AppLocalizations.of(context)?.language ?? 'Language'),
+            subtitle: Text(
+              context.watch<LocaleProvider>().locale.languageCode == 'uz' ? 'O\'zbek' :
+              context.watch<LocaleProvider>().locale.languageCode == 'ru' ? 'Русский' : 'English',
+                style: const TextStyle(fontSize: 12, color: Colors.white38)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () => _showLanguageDialog(context),
           ),
           ListTile(
             leading: const Icon(Icons.info_outline, color: Colors.white54),
-            title: const Text('About Tanishuv'),
+            title: Text(AppLocalizations.of(context)?.aboutApp ?? 'About'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => showAboutDialog(
               context: context,
-              applicationName: 'Tanishuv',
+              applicationName: AppLocalizations.of(context)?.appName ?? 'Tanishuv',
               applicationVersion: '1.0.0',
               applicationLegalese: '© 2024 Tanishuv. All rights reserved.',
             ),
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.white54),
-            title: const Text('Logout'),
+            title: Text(AppLocalizations.of(context)?.logout ?? 'Logout'),
             onTap: () => _showLogoutDialog(context),
           ),
           ListTile(
             leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: const Text('Delete Account',
-                style: TextStyle(color: Colors.redAccent)),
+            title: Text(AppLocalizations.of(context)?.deleteAccount ?? 'Delete Account',
+                style: const TextStyle(color: Colors.redAccent)),
             onTap: () => _showDeleteDialog(context),
           ),
           const SizedBox(height: 32),
@@ -297,18 +312,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
+              final navigator = Navigator.of(context);
               final authService =
                   Provider.of<AuthService>(context, listen: false);
               await authService.signOut();
               if (context.mounted) {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Pop SettingsScreen
+                // Pop everything back to root — the StreamBuilder will show LoginScreen
+                navigator.popUntil((route) => route.isFirst);
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white10),
             child: const Text('Logout'),
           ),
         ],
+      ),
+    );
+  }
+
+  // Invite dialog removed in favor of InviteProgressScreen
+
+  void _showLanguageDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceColor,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('O\'zbek', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Provider.of<LocaleProvider>(context, listen: false).setLocale(const Locale('uz'));
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('Русский', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Provider.of<LocaleProvider>(context, listen: false).setLocale(const Locale('ru'));
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('English', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Provider.of<LocaleProvider>(context, listen: false).setLocale(const Locale('en'));
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

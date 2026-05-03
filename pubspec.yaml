@@ -45,6 +45,13 @@ dependencies:
   flutter_animate: ^4.5.2
   flutter_slidable: ^4.0.3
   swipe_to: ^1.0.6
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.3
+  share_plus: ^10.1.2
+  # app_links handles Universal Links (iOS) and App Links (Android)
+  app_links: ^7.0.0
+  device_info_plus: ^12.4.0
 
 dev_dependencies:
   flutter_test:
@@ -66,3 +73,4 @@ flutter:
 
   assets:
     - assets/
+    - assets/images/

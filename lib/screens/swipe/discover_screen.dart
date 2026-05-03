@@ -9,6 +9,7 @@ import '../../services/match_service.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user_model.dart';
 import 'person_detail_screen.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -87,7 +88,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         direction == CardSwiperDirection.top;
 
     if (isLike && _currentUserModel != null) {
-      final hasQuota = await dbService.canSwipe(currentUserId, _currentUserModel!.isPremium);
+      final hasQuota = await dbService.canSwipe(currentUserId);
       if (!hasQuota) {
         if (mounted) _showLimitDialog();
         return false;
@@ -333,11 +334,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                         const Icon(Icons.verified,
                             color: Colors.blueAccent, size: 24),
                       ],
-                      if (user.isPremium) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.workspace_premium,
-                            color: Colors.amber, size: 22),
-                      ],
                     ],
                   ),
                   if (user.bio != null && user.bio!.isNotEmpty) ...[
@@ -391,19 +387,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           color: Colors.redAccent,
           size: 52,
           onTap: () => controller.swipe(CardSwiperDirection.left),
-        ),
+        ).animate().scale(delay: 100.ms, duration: 300.ms, curve: Curves.easeOutBack),
         _actionButton(
           icon: Icons.star,
           color: Colors.blue,
           size: 44,
           onTap: () => controller.swipe(CardSwiperDirection.top),
-        ),
+        ).animate().scale(delay: 150.ms, duration: 300.ms, curve: Curves.easeOutBack),
         _actionButton(
           icon: Icons.favorite,
           color: AppTheme.primaryColor,
           size: 52,
           onTap: () => controller.swipe(CardSwiperDirection.right),
-        ),
+        ).animate().scale(delay: 200.ms, duration: 300.ms, curve: Curves.easeOutBack)
+         .animate(onPlay: (controller) => controller.repeat(reverse: true))
+         .scaleXY(end: 1.05, duration: 1000.ms),
       ],
     );
   }
@@ -444,24 +442,19 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                '🎉',
-                style: TextStyle(fontSize: 80),
-              ),
+              const Text('🎉', style: TextStyle(fontSize: 80))
+                  .animate(onPlay: (c) => c.repeat())
+                  .shake(hz: 3, curve: Curves.easeInOut),
               const SizedBox(height: 16),
               const Text(
                 "It's a Match!",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+              ).animate().fade(duration: 400.ms).slideY(begin: 0.5, end: 0),
               const SizedBox(height: 8),
               Text(
                 'You and ${_matchedUser?.name} liked each other!',
                 style: const TextStyle(color: Colors.white70, fontSize: 16),
-              ),
+              ).animate().fade(delay: 200.ms, duration: 400.ms),
               const SizedBox(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -470,15 +463,12 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: AppTheme.primaryColor, width: 3),
+                        border: Border.all(color: AppTheme.primaryColor, width: 3),
                       ),
-                      child: CircleAvatar(
-                        radius: 48,
-                        backgroundImage:
-                            NetworkImage(_matchedUser!.photoUrl),
-                      ),
-                    ),
+                      child: CircleAvatar(radius: 48, backgroundImage: NetworkImage(_matchedUser!.photoUrl)),
+                    ).animate()
+                     .scale(delay: 400.ms, duration: 500.ms, curve: Curves.elasticOut)
+                     .shimmer(delay: 800.ms, duration: 1000.ms),
                 ],
               ),
               const SizedBox(height: 40),
@@ -487,22 +477,19 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   minimumSize: const Size(200, 52),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
-                child: const Text('Send Message',
-                    style: TextStyle(fontSize: 16)),
-              ),
+                child: const Text('Send Message', style: TextStyle(fontSize: 16)),
+              ).animate().fade(delay: 600.ms, duration: 400.ms).slideY(begin: 0.5, end: 0),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => setState(() => _showMatchOverlay = false),
-                child: const Text('Keep Swiping',
-                    style: TextStyle(color: Colors.white54)),
-              ),
+                child: const Text('Keep Swiping', style: TextStyle(color: Colors.white54)),
+              ).animate().fade(delay: 800.ms, duration: 400.ms),
             ],
           ),
         ),
-      ),
+      ).animate().fadeIn(duration: 300.ms),
     );
   }
 
@@ -529,7 +516,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
             child: const Text('Refresh'),
           ),
         ],
-      ),
+      ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
     );
   }
 

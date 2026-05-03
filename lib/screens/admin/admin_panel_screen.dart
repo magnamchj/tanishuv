@@ -152,11 +152,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen>
               title: Row(
                 children: [
                   Text(user['name'] ?? 'Unknown'),
-                  if (user['isPremium'] == true) ...[
-                    const SizedBox(width: 4),
-                    const Icon(Icons.workspace_premium,
-                        color: Colors.amber, size: 16),
-                  ],
                   if (isBanned) ...[
                     const SizedBox(width: 4),
                     Container(

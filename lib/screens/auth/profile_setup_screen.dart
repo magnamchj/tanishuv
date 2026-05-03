@@ -20,6 +20,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _isSaving = false;
+  bool _isLoading = true;
 
   // Form State
   String? _name;
@@ -51,6 +52,50 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     'Technology',
     'Sports',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingData();
+  }
+
+  /// Pre-populate form fields from existing Firestore data (e.g. from email registration)
+  Future<void> _loadExistingData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instanceFor(app: Firebase.app(), databaseId: 'tanishuv')
+            .collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final data = doc.data()!;
+          setState(() {
+            _name = data['name'] as String? ?? _name;
+            if (data['birthdate'] != null) {
+              _birthdate = (data['birthdate'] as Timestamp).toDate();
+            } else if (data['age'] != null) {
+              // Approximate birthdate from age if birthdate not stored
+              final age = data['age'] as int;
+              _birthdate = DateTime(DateTime.now().year - age, 1, 1);
+            }
+            _gender = data['gender'] as String?;
+            if (_gender == 'Unknown') _gender = null; // Reset placeholder values
+            if (_gender == 'Erkak') _gender = 'Male';
+            if (_gender == 'Ayol') _gender = 'Female';
+            _lookingFor = data['lookingFor'] as String?;
+            _bio = data['bio'] as String?;
+            _selectedInterests = List<String>.from(data['interests'] ?? []);
+            _city = data['city'] as String?;
+            _height = data['height'] != null ? (data['height'] as num).toDouble() : null;
+            _languages = List<String>.from(data['languages'] ?? []);
+            _relationshipGoal = data['relationshipGoal'] as String?;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading existing profile data: $e');
+    }
+    if (mounted) setState(() => _isLoading = false);
+  }
 
   @override
   void dispose() {
@@ -179,6 +224,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+      );
+    }
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
@@ -273,6 +324,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             const Text('What\'s your first name?', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
             TextFormField(
+              initialValue: _name,
               style: const TextStyle(color: Colors.white, fontSize: 18),
               decoration: const InputDecoration(
                 hintText: 'Name',
